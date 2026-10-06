@@ -4,43 +4,52 @@ import os
 
 # Judul Halaman Web
 st.title("📄 MarkItDown Converter")
-st.write("Ubah file PDF, Word, Excel, PPT menjadi Markdown murni.")
+st.write("Ubah file PDF, Word, Excel, PPT menjadi Markdown murni. Bisa multi-file sekaligus!")
 
-# Widget Upload File
-uploaded_file = st.file_uploader("Pilih atau drag & drop file ke sini...", 
-                                 type=["pdf", "docx", "xlsx", "pptx", "html", "csv", "json"])
+# Widget Upload File dengan dukungan multi-file
+uploaded_files = st.file_uploader(
+    "Pilih atau drag & drop beberapa file ke sini...", 
+    type=["pdf", "docx", "xlsx", "pptx", "html", "csv", "json"],
+    accept_multiple_files=True
+)
 
-if uploaded_file is not None:
-    # Simpan file yang diupload ke penyimpanan sementara
-    temp_filename = f"temp_{uploaded_file.name}"
-    with open(temp_filename, "wb") as f:
-        f.write(uploaded_file.getbuffer())
+if uploaded_files:
+    st.info(f"Total {len(uploaded_files)} file dipilih. Memproses konversi...")
     
-    st.info("Sedang memproses konversi, mohon tunggu...")
+    # Inisialisasi MarkItDown
+    md = MarkItDown()
     
-    try:
-        # Jalankan konversi MarkItDown
-        md = MarkItDown()
-        result = md.convert(temp_filename)
+    for uploaded_file in uploaded_files:
+        st.write("---")
+        st.subheader(f"📁 File: {uploaded_file.name}")
         
-        st.success("Konversi berhasil!")
+        temp_filename = f"temp_{uploaded_file.name}"
+        with open(temp_filename, "wb") as f:
+            f.write(uploaded_file.getbuffer())
         
-        # Tampilkan preview hasil konversi
-        with st.expander("Lihat Preview Teks Markdown"):
-            st.text_area("Hasil:", result.text_content, height=250)
-        
-        # Tombol Download hasil .md
-        st.download_button(
-            label="⬇️ Download File Markdown (.md)",
-            data=result.text_content,
-            file_name=f"{uploaded_file.name}.md",
-            mime="text/markdown"
-        )
-        
-    except Exception as e:
-        st.error(f"Terjadi kesalahan saat konversi: {e}")
-        
-    finally:
-        # Hapus file sementara agar server tidak penuh
-        if os.path.exists(temp_filename):
-            os.remove(temp_filename)
+        try:
+            # Jalankan konversi
+            result = md.convert(temp_filename)
+            
+            st.success(f"Berhasil mengkonversi {uploaded_file.name}!")
+            
+            # Tampilkan preview teks markdown
+            with st.expander(f"Lihat Preview Markdown ({uploaded_file.name})"):
+                st.text_area("Hasil:", result.text_content, height=200, key=uploaded_file.name)
+            
+            # Tombol Download per file
+            st.download_button(
+                label=f"⬇️ Download {uploaded_file.name}.md",
+                data=result.text_content,
+                file_name=f"{uploaded_file.name}.md",
+                mime="text/markdown",
+                key=f"dl_{uploaded_file.name}"
+            )
+            
+        except Exception as e:
+            st.error(f"Gagal memproses {uploaded_file.name}: {e}")
+            
+        finally:
+            # Hapus file sementara
+            if os.path.exists(temp_filename):
+                os.remove(temp_filename)
