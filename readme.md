@@ -1,4 +1,4 @@
-MarkItDown Converter untuk Claude Web
+MarkItDown Converter
 
 Aplikasi sederhana ini berfungsi untuk mengonversi berbagai macam file berukuran besar menjadi teks murni berformat Markdown (.md).
 
